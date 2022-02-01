@@ -1,46 +1,100 @@
 import glob
-import os
-from os.path import join
-import librosa
-import soundfile
-import matplotlib.pyplot as plt
-from scipy.ndimage.filters import gaussian_filter
 from PIL import Image
+from torch import nn
 
-files = []
-for ext in ('*.m4a', '*.ogg', '*.mp3'):
-   files.extend(glob.glob(join("kikuwu/*/", ext)))
-'''
-for i in range(len(files)):
-   os.mkdir("img\\{}".format(i))
-'''
-for i in range(len(files)):
-   os.mkdir("img\\{}".format(i))
+# Batch size during training
+batch_size = 128
 
-num = 0
-for dir in files:
-   print(dir.split("\\")[-1])
-   y, sr = librosa.core.load(dir)
-   print(sr )
-   #S = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=4000))
-   S = gaussian_filter(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=8000), sigma=0.5)
-   plt.title(dir.split("\\")[-1])
-   length = 432
-   stride = 144
-   for i in range(0, len(S[0]) - length, stride):
-      im = Image.fromarray(S[:,i:i+length])
-      if im.mode != 'RGB':
-         im = im.convert('RGB')
-      im.save("img\\{}\\{}.png".format(num, i))
-      print("{}/{}".format(i, len(S[0])))
-      #plt.imshow(S[:,i:i+length])
-      #plt.show()
-   num += 1
-   print("PROGRESS: {}/{}".format(num, len(files)))
-   '''
-   M = librosa.feature.inverse.mel_to_stft(S[:,:1600])
-   print("oibe")
-   y = librosa.griffinlim(M)
-   print("twj9")
-   soundfile.write('sample.wav', y, sr)
-   '''
+# Spatial size of training images. All images will be resized to this
+#   size using a transformer.
+image_size = 64
+
+# Number of channels in the training images. For color images this is 3
+nc = 1
+
+# Size of z latent vector (i.e. size of generator input)
+nz = 100
+
+# Size of feature maps in generator
+ngf = 64
+
+# Size of feature maps in discriminator
+ndf = 64
+
+# Number of training epochs
+num_epochs = 5
+
+# Learning rate for optimizers
+lr = 0.0002
+
+# Beta1 hyperparam for Adam optimizers
+beta1 = 0.5
+
+# Number of GPUs available. Use 0 for CPU mode.
+ngpu = 0
+
+class Generator(nn.Module):
+    def __init__(self, ngpu):
+        super(Generator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            nn.ConvTranspose2d( nz, ngf * 8, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            nn.ConvTranspose2d( ngf * 4, ngf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            nn.ConvTranspose2d( ngf * 2, ngf, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32
+            nn.ConvTranspose2d( ngf, nc, 4, 2, 1, bias=False),
+            nn.Tanh()
+            # state size. (nc) x 64 x 64
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
+class Discriminator(nn.Module):
+    def __init__(self, ngpu):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, input):
+        return self.main(input)
+ 
+
+dirs = glob.iglob("img/*/*.png")
+print(len(list(dirs)))
+
+for dir in dirs:
+   im = Image.imread(dir)
+   
