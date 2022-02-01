@@ -25,8 +25,8 @@ for dir in files:
    #S = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=4000))
    S = gaussian_filter(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=8000), sigma=0.5)
    plt.title(dir.split("\\")[-1])
-   length = 432
-   stride = 144
+   length = 512
+   stride = 128
    for i in range(0, len(S[0]) - length, stride):
       im = Image.fromarray(S[:,i:i+length])
       if im.mode != 'RGB':
