@@ -34,7 +34,7 @@ ndf = 64
 num_epochs = 250
 
 # Learning rate for optimizers
-lr = 0.0002
+lr = 5e-5
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -43,30 +43,30 @@ beta1 = 0.5
 ngpu = 1
 
 workers = 2
-
+'''
 class Generator(nn.Module):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d( nz, ngf * 8, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(100, 512, kernel_size=(4,4), stride=(2,2), padding=(1,1), bias=False),
             nn.BatchNorm2d(ngf * 8),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
-            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d(512, 256, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
             nn.BatchNorm2d(ngf * 4),
             nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
-            nn.ConvTranspose2d( ngf * 4, ngf * 2, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d(256, 128, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
             nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose2d( ngf * 2, ngf, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d(128, 64, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
             nn.BatchNorm2d(ngf),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
-            nn.ConvTranspose2d( ngf, nc, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d( 64, 1, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
@@ -80,28 +80,86 @@ class Discriminator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
-            nn.Conv2d(nc, ndf, 4, 4, 1, bias=False),
+            nn.Conv2d(1, 64, kernel_size=(4,4), stride=(4, 4), padding=(1, 1), bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            nn.Conv2d(ndf, ndf * 2, 4, 4, 1, bias=False),
+            nn.Conv2d(64, 128, kernel_size=(4,4), stride=(4, 4), padding=(1, 1), bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(ndf * 2, ndf * 4, 4, 4, 1, bias=False),
+            nn.Conv2d(128, 256, kernel_size=(4,4), stride=(4, 4), padding=(1, 1), bias=False),
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 4, 1, bias=False),
+            nn.Conv2d(256, 512, kernel_size=(4,4), stride=(4, 4), padding=(1, 1), bias=False),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(ndf * 8, 1, 2, 1, 0, bias=False),
+            nn.Conv2d(512, 1, kernel_size=(2,2), stride=(1, 1), padding=(0, 0), bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, input):
+        return self.main(input)'''
+ 
+class Generator(nn.Module):
+    def __init__(self, ngpu):
+        super(Generator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is Z, going into a convolution
+            nn.ConvTranspose2d(100, 512, kernel_size=(4,4), stride=(2,2), padding=(1,1), bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.ReLU(True),
+            # state size. (ngf*8) x 4 x 4
+            nn.ConvTranspose2d(512, 256, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+            # state size. (ngf*4) x 8 x 8
+            nn.ConvTranspose2d(256, 128, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+            # state size. (ngf*2) x 16 x 16
+            nn.ConvTranspose2d(128, 64, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+            # state size. (ngf) x 32 x 32
+            nn.ConvTranspose2d( 64, 1, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
+            nn.Tanh()
+            # state size. (nc) x 64 x 64
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
+class Discriminator(nn.Module):
+    def __init__(self, ngpu):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            nn.Flatten(),
+            # input is (nc) x 64 x 64
+            nn.Conv1d(1, 64, kernel_size=4, stride=4, padding=1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv1d(64, 128, kernel_size=4, stride=4, padding=1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv1d(128, 256, kernel_size=4, stride=4, padding=1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv1d(256, 512, kernel_size=4, stride=4, padding=1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv1d(512, 1, kernel_size=2, stride=1, padding=0, bias=False),
             nn.Sigmoid()
         )
 
     def forward(self, input):
         return self.main(input)
- 
 
 dirs = glob.iglob("img/*/*.png")
 
@@ -122,7 +180,7 @@ plt.figure(figsize=(8,8))
 plt.axis("off")
 plt.title("Training Images")
 plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
-plt.show()
+#plt.show()
 
 # custom weights initialization called on netG and netD
 def weights_init(m):

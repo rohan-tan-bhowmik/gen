@@ -20,6 +20,7 @@ for i in range(len(files)):
 num = 0
 for dir in files:
    print(dir.split("\\")[-1])
+
    y, sr = librosa.core.load(dir)
    print(sr )
    #S = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=4000))
@@ -35,7 +36,8 @@ for dir in files:
       print("{}/{}".format(i, len(S[0])))
       #plt.imshow(S[:,i:i+length])
       #plt.show()
-   num += 1
+   num += 1  
+
    print("PROGRESS: {}/{}".format(num, len(files)))
    '''
    M = librosa.feature.inverse.mel_to_stft(S[:,:1600])
