@@ -22,9 +22,9 @@ for dir in files:
    print(dir.split("\\")[-1])
 
    y, sr = librosa.core.load(dir)
-   print(sr )
+   print(sr)
    #S = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=4000))
-   S = gaussian_filter(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=8000), sigma=0.5)
+   S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=sr/2)
    plt.title(dir.split("\\")[-1])
    length = 512
    stride = 128
