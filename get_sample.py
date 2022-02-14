@@ -1,11 +1,13 @@
 import librosa
 import soundfile
 from scipy.ndimage.filters import gaussian_filter
+import matplotlib.pyplot as plt
+import cv2
+import numpy as np
 
-y, sr = librosa.core.load("kikuwu\Kikuo - 3rdAlbum _きくおミク2 (Kikuo Miku 2)_ X-FADE DEMO PV\Kikuo - 3rdAlbum _きくおミク2 (Kikuo Miku 2)_ X-FADE DEMO PV (128kbit_AAC).m4a")
-print(sr)
-#S = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=4000))
-S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=256, fmax=sr/2)
+amplify = 2
+S = amplify * np.asarray(plt.imread("img/25/2816.png")[:, :, 0])#, dtype=np.float64)
+sr = 22050
 
 M = librosa.feature.inverse.mel_to_stft(S[:,:1600])
 print("oibe")
