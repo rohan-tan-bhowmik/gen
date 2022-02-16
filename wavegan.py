@@ -31,10 +31,10 @@ ngf = 64
 ndf = 64
 
 # Number of training epochs
-num_epochs = 250
+num_epochs = 10
 
 # Learning rate for optimizers
-lr = 5e-5
+lr = 5e-4
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -108,23 +108,19 @@ class Generator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d(100, 512, kernel_size=(4,4), stride=(2,2), padding=(1,1), bias=False),
-            nn.BatchNorm2d(ngf * 8),
+            nn.ConvTranspose1d(100, 512, kernel_size=4, stride=4, padding=0, bias=False),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
-            nn.ConvTranspose2d(512, 256, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
-            nn.BatchNorm2d(ngf * 4),
+            nn.ConvTranspose1d(512, 256, kernel_size=16, stride=16, padding=1, bias=False),
             nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
-            nn.ConvTranspose2d(256, 128, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
-            nn.BatchNorm2d(ngf * 2),
+            nn.ConvTranspose1d(256, 128, kernel_size=16, stride=16, padding=1, bias=False),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose2d(128, 64, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
-            nn.BatchNorm2d(ngf),
+            nn.ConvTranspose1d(128, 64, kernel_size=16, stride=16, padding=1, bias=False),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
-            nn.ConvTranspose2d( 64, 1, kernel_size=(4,4), stride=(4,4), padding=(1,1), bias=False),
+            nn.ConvTranspose1d( 64, 1, kernel_size=16, stride=16, padding=1, bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
@@ -136,37 +132,48 @@ class Discriminator(nn.Module):
     def __init__(self, ngpu):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
-        self.main = nn.Sequential(
-            nn.Flatten(),
-            # input is (nc) x 64 x 64
-            nn.Conv1d(1, 64, kernel_size=4, stride=4, padding=1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 32 x 32
-            nn.Conv1d(64, 128, kernel_size=4, stride=4, padding=1, bias=False),
-            nn.BatchNorm2d(ndf * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 16 x 16
-            nn.Conv1d(128, 256, kernel_size=4, stride=4, padding=1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 8 x 8
-            nn.Conv1d(256, 512, kernel_size=4, stride=4, padding=1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
-            nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*8) x 4 x 4
-            nn.Conv1d(512, 1, kernel_size=2, stride=1, padding=0, bias=False),
-            nn.Sigmoid()
-        )
+        self.relu = nn.LeakyReLU(0.2, inplace=True)
+        #nn.Flatten(),
+        # input is (nc) x 64 x 64
+        self.conv1 = nn.Conv1d(1, 64, kernel_size=16, stride=16, padding=1, bias=False)
+        # state size. (ndf) x 32 x 32
+        self.conv2 = nn.Conv1d(64, 128, kernel_size=16, stride=16, padding=1, bias=False)
+        # state size. (ndf*2) x 16 x 16
+        self.conv3 = nn.Conv1d(128, 256, kernel_size=16, stride=16, padding=1, bias=False)
+        # state size. (ndf*4) x 8 x 8
+        self.conv4 = nn.Conv1d(256, 512, kernel_size=16, stride=16, padding=1, bias=False)
+        # state size. (ndf*8) x 4 x 4
+        self.conv5 = nn.Conv1d(512, 1, kernel_size=4, stride=4, padding=0, bias=False)
+        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, input):
-        return self.main(input)
+    def forward(self, x):
+        #print("Asdf")
+        #print(x.shape)
+        x = self.relu(self.conv1(x))
+        #print("Asdf")
+        #print(x.shape)
+        x = self.relu(self.conv2(x))
+        #print("Asdf")
+        #print(x.shape)
+        x = self.relu(self.conv3(x))
+        #print("Asdf")
+        #print(x.shape)
+        x = self.relu(self.conv4(x))
+        #print("Asdf")
+        #print(x.shape)
+        x = self.sigmoid(self.conv5(x))
+        #print("Asdf")
+        #print(x.shape)
+        return x
 
 dirs = glob.iglob("img/*/*.png")
 
 print(len(list(dirs)))
 
-dataset = datasets.ImageFolder(root="img", transform=transforms.Compose([transforms.Grayscale(num_output_channels=1),
-                                            transforms.ToTensor()]))
+dataset = datasets.ImageFolder(root="img", transform=transforms.Compose([transforms.ToTensor(),
+                                                        transforms.Grayscale(num_output_channels=1),
+                                                        transforms.Lambda(lambda x: torch.flatten(x)),
+                                                        transforms.Lambda(lambda x: x.view((1, x.shape[0])))]))
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                          shuffle=True)
@@ -179,7 +186,7 @@ real_batch = next(iter(dataloader))
 plt.figure(figsize=(8,8))
 plt.axis("off")
 plt.title("Training Images")
-plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
+#plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
 #plt.show()
 
 # custom weights initialization called on netG and netD
@@ -224,7 +231,7 @@ criterion = nn.BCELoss()
 
 # Create batch of latent vectors that we will use to visualize
 #  the progression of the generator
-fixed_noise = torch.randn(64, nz, 1, 1, device=device)
+fixed_noise = torch.randn(64, nz, 1, device=device)
 
 # Establish convention for real and fake labels during training
 real_label = 1.
@@ -258,7 +265,9 @@ for epoch in range(num_epochs):
         b_size = real_cpu.size(0)
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
+        #print(real_cpu.shape)
         output = netD(real_cpu).view(-1)
+        #print(output.shape)
         # Calculate loss on all-real batch
         #print(data[0].size())
         #print(output.size(), label.size())
@@ -269,9 +278,11 @@ for epoch in range(num_epochs):
 
         ## Train with all-fake batch
         # Generate batch of latent vectors
-        noise = torch.randn(b_size, nz, 1, 1, device=device)
+        noise = torch.randn(b_size, nz, 1, device=device)
         # Generate fake image batch with G
         fake = netG(noise)
+        #print("Gen shape")
+        #print(fake.shape)
         label.fill_(fake_label)
         #print(fake.size())
         # Classify all fake batch with D
@@ -302,7 +313,7 @@ for epoch in range(num_epochs):
         optimizerG.step()
 
         # Output training stats
-        if i % 50 == 0:
+        if i % 10 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, num_epochs, i, len(dataloader),
                      errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
