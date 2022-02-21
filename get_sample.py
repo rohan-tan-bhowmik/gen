@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 amplify = 2
-audio = plt.imread("24.png")
+audio = plt.imread("29.png")
 audio = np.maximum(audio - np.percentile(audio, 15), 0)
 audio -= np.min(audio)
 audio /= np.max(audio)
