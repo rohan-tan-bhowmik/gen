@@ -31,10 +31,10 @@ ngf = 64
 ndf = 64
 
 # Number of training epochs
-num_epochs = 10
+num_epochs = 250
 
 # Learning rate for optimizers
-lr = 5e-4
+lr = 5e-5
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -111,16 +111,16 @@ class Generator(nn.Module):
             nn.ConvTranspose1d(100, 512, kernel_size=4, stride=4, padding=0, bias=False),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
-            nn.ConvTranspose1d(512, 256, kernel_size=16, stride=16, padding=1, bias=False),
+            nn.ConvTranspose1d(512, 256, kernel_size=16, stride=16, padding=0, bias=False),
             nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
-            nn.ConvTranspose1d(256, 128, kernel_size=16, stride=16, padding=1, bias=False),
+            nn.ConvTranspose1d(256, 128, kernel_size=16, stride=16, padding=0, bias=False),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose1d(128, 64, kernel_size=16, stride=16, padding=1, bias=False),
+            nn.ConvTranspose1d(128, 64, kernel_size=16, stride=16, padding=0, bias=False),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
-            nn.ConvTranspose1d( 64, 1, kernel_size=16, stride=16, padding=1, bias=False),
+            nn.ConvTranspose1d( 64, 1, kernel_size=16, stride=16, padding=0, bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
@@ -135,13 +135,13 @@ class Discriminator(nn.Module):
         self.relu = nn.LeakyReLU(0.2, inplace=True)
         #nn.Flatten(),
         # input is (nc) x 64 x 64
-        self.conv1 = nn.Conv1d(1, 64, kernel_size=16, stride=16, padding=1, bias=False)
+        self.conv1 = nn.Conv1d(1, 64, kernel_size=16, stride=16, padding=0, bias=False)
         # state size. (ndf) x 32 x 32
-        self.conv2 = nn.Conv1d(64, 128, kernel_size=16, stride=16, padding=1, bias=False)
+        self.conv2 = nn.Conv1d(64, 128, kernel_size=16, stride=16, padding=0, bias=False)
         # state size. (ndf*2) x 16 x 16
-        self.conv3 = nn.Conv1d(128, 256, kernel_size=16, stride=16, padding=1, bias=False)
+        self.conv3 = nn.Conv1d(128, 256, kernel_size=16, stride=16, padding=0, bias=False)
         # state size. (ndf*4) x 8 x 8
-        self.conv4 = nn.Conv1d(256, 512, kernel_size=16, stride=16, padding=1, bias=False)
+        self.conv4 = nn.Conv1d(256, 512, kernel_size=16, stride=16, padding=0, bias=False)
         # state size. (ndf*8) x 4 x 4
         self.conv5 = nn.Conv1d(512, 1, kernel_size=4, stride=4, padding=0, bias=False)
         self.sigmoid = nn.Sigmoid()
@@ -179,7 +179,7 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                          shuffle=True)
 
 # Decide which device we want to run on
-device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+device = torch.device("cuda:0")# if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
 # Plot some training images
 real_batch = next(iter(dataloader))
@@ -270,7 +270,7 @@ for epoch in range(num_epochs):
         #print(output.shape)
         # Calculate loss on all-real batch
         #print(data[0].size())
-        #print(output.size(), label.size())
+        ###print(output.size(), label.size())
         errD_real = criterion(output, label)
         # Calculate gradients for D in backward pass
         errD_real.backward()
@@ -282,7 +282,7 @@ for epoch in range(num_epochs):
         # Generate fake image batch with G
         fake = netG(noise)
         #print("Gen shape")
-        #print(fake.shape)
+        ###print(fake.shape)
         label.fill_(fake_label)
         #print(fake.size())
         # Classify all fake batch with D
@@ -341,7 +341,16 @@ plt.show()
 
 fig = plt.figure(figsize=(8,8))
 plt.axis("off")
-ims = [[plt.imshow(np.transpose(i,(1,2,0)), animated=True)] for i in img_list]
+for i in img_list:
+    print(i.shape)
+ims = [[plt.imshow(i[0][0].view(512, 512), animated=True)] for i in img_list]
+'''np.transpose(i,(1,2,0))'''
+for i in range(len(ims)):
+    plt.imsave("{}.png".format(i), img_list[i][0][0].view(512, 512))
+    file = open("{}.npy".format(i), 'wb')
+    np.save(file, img_list[i][0][0].view(512, 512))
+    file.close()
+
 ani = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=1000, blit=True)
 
 HTML(ani.to_jshtml())

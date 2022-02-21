@@ -31,7 +31,7 @@ ngf = 64
 ndf = 64
 
 # Number of training epochs
-num_epochs = 250
+num_epochs = 1
 
 # Learning rate for optimizers
 lr = 0.0002
@@ -272,6 +272,8 @@ plt.show()
 
 fig = plt.figure(figsize=(8,8))
 plt.axis("off")
+for i in img_list:
+    print(np.transpose(i,(1,2,0)).shape)
 ims = [[plt.imshow(np.transpose(i,(1,2,0)), animated=True)] for i in img_list]
 ani = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=1000, blit=True)
 
