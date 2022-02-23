@@ -1,9 +1,30 @@
 get yt playlist links for:
 
 miku 1-6
-hana 1-2
+https://www.youtube.com/playlist?list=PLavxNm7YsFlsARffeh1oOuL2DFu8gRBJO
+https://www.youtube.com/playlist?list=PLavxNm7YsFlv9AU-Cu1ydgCsmp_SV1fES
+https://www.youtube.com/playlist?list=PLoi0QDd0SA-tGgIVkBx2b6Msn5zDCdHGm
+https://www.youtube.com/playlist?list=PLavxNm7YsFlvtQGkYl-kbm3fi4db-nK35
+https://www.youtube.com/playlist?list=PLUjXtKNTTcDC07b8q7Bd9U2qcZZyNOx6_
+https://www.youtube.com/playlist?list=PLS_uUJ6RHWqhREzr4WVfu6dH0hFAfWVdI
+hana 1-2 (exclude prelude/interlude!!)
+https://www.youtube.com/playlist?list=PLavxNm7YsFlvpKWp9S9pQQwN7wXOwO8pC
+https://www.youtube.com/playlist?list=PLGMuNaEsEHWuPH-FGGIeV0cGgMr_lkUmg
 world 1-3
+https://www.youtube.com/playlist?list=PLavxNm7YsFluD4HQa_6s8nbmN-YZTJeEl
+https://www.youtube.com/playlist?list=PLEZFGJ7GblPjVBwpiQ3DxI6bnJHr67rWW
+https://www.youtube.com/watch?v=B8NJeaOCrrU
 miku0?
 si_ku?
 live?
 extras/other channels (prenatal, svaahaa, etc.)
+https://www.youtube.com/watch?v=4GpZYocafHU
+https://www.youtube.com/watch?v=Pca7RONLQdE
+
+CHANGED:
+[list here]
+
+TODO:
+ADD Ikomono no tamashii no yukue
+
+When emailing, be polite, apologetic if necessary
