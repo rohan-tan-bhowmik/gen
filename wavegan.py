@@ -43,7 +43,7 @@ beta1 = 0.5
 ngpu = 1
 
 workers = 2
-'''
+
 class Generator(nn.Module):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
@@ -100,8 +100,8 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, input):
-        return self.main(input)'''
- 
+        return self.main(input)
+''' 
 class Generator(nn.Module):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
@@ -165,21 +165,24 @@ class Discriminator(nn.Module):
         #print("Asdf")
         #print(x.shape)
         return x
+'''
 
 dirs = glob.iglob("img/*/*.png")
 
 print(len(list(dirs)))
 
-dataset = datasets.ImageFolder(root="img", transform=transforms.Compose([transforms.ToTensor(),
+dataset = datasets.ImageFolder(root="img", transform=transforms.Compose([
                                                         transforms.Grayscale(num_output_channels=1),
-                                                        transforms.Lambda(lambda x: torch.flatten(x)),
-                                                        transforms.Lambda(lambda x: x.view((1, x.shape[0])))]))
+                                                        transforms.ToTensor()
+                                                        #transforms.Lambda(lambda x: torch.flatten(x)),
+                                                        #transforms.Lambda(lambda x: x.view((1, x.shape[0])))
+                                                        ]))
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                          shuffle=True)
 
 # Decide which device we want to run on
-device = torch.device("cuda:0")# if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+device = torch.device("cuda:0") if (torch.cuda.is_available() and ngpu > 0) else torch.device("cpu")
 
 # Plot some training images
 real_batch = next(iter(dataloader))

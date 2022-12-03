@@ -1,3 +1,7 @@
+NOT DONE:
+spectrograms sounds weird, try fmax *= 2 (to equal sr)
+
+DONE:
 get yt playlist links for:
 
 miku 1-6
