@@ -31,10 +31,10 @@ ngf = 64
 ndf = 64
 
 # Number of training epochs
-num_epochs = 250
+num_epochs = 100
 
 # Learning rate for optimizers
-lr = 9e-4
+lr = 2e-4
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -169,7 +169,7 @@ class Discriminator(nn.Module):
 
 dirs = glob.iglob("img/*/*.png")
 
-print(len(list(dirs)))
+length = (len(list(dirs)))
 
 dataset = datasets.ImageFolder(root="img", transform=transforms.Compose([
                                                         transforms.Grayscale(num_output_channels=1),
@@ -252,7 +252,7 @@ G_losses = []
 D_losses = []
 iters = 0
 
-print("Starting Training Loop...")
+print("Starting Training Loop on {0}...".format(device))
 # For each epoch
 for epoch in range(num_epochs):
     # For each batch in the dataloader
@@ -326,7 +326,7 @@ for epoch in range(num_epochs):
         D_losses.append(errD.item())
 
         # Check how the generator is doing by saving G's output on fixed_noise
-        if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
+        if i == 80 - 1:#(iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
             with torch.no_grad():
                 fake = netG(fixed_noise).detach().cpu()
             img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
@@ -349,7 +349,7 @@ for i in img_list:
 ims = [[plt.imshow(i[0][0].view(512, 512), animated=True)] for i in img_list]
 '''np.transpose(i,(1,2,0))'''
 for i in range(len(ims)):
-    plt.imsave("{}.png".format(i), img_list[i][0][0].view(512, 512))
+    plt.imsave("{}.png".format(i), img_list[i][0][0].view(512, 512), cmap='gray')
     file = open("{}.npy".format(i), 'wb')
     np.save(file, img_list[i][0][0].view(512, 512))
     file.close()
