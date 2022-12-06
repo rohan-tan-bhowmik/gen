@@ -12,7 +12,7 @@ import matplotlib.animation as animation
 from IPython.display import HTML
 
 # Batch size during training
-batch_size = 128
+batch_size = 64
 
 # Spatial size of training images. All images will be resized to this
 #   size using a transformer.
@@ -34,7 +34,7 @@ ndf = 64
 num_epochs = 1
 
 # Learning rate for optimizers
-lr = 0.0002
+lr = 0.00002
 
 # Beta1 hyperparam for Adam optimizers
 beta1 = 0.5
@@ -50,23 +50,23 @@ class Generator(nn.Module):
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d( nz, ngf * 8, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d( nz, ngf * 8, kernel_size=4, stride=4, padding=1, bias=False),
             nn.BatchNorm2d(ngf * 8),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
-            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d(ngf * 8, ngf * 4, kernel_size=4, stride=4, padding=0, bias=False),
             nn.BatchNorm2d(ngf * 4),
             nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
-            nn.ConvTranspose2d( ngf * 4, ngf * 2, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d( ngf * 4, ngf * 2, kernel_size=4, stride=4, padding=0, bias=False),
             nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
-            nn.ConvTranspose2d( ngf * 2, ngf, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d( ngf * 2, ngf, kernel_size=4, stride=4, padding=0, bias=False),
             nn.BatchNorm2d(ngf),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
-            nn.ConvTranspose2d( ngf, nc, 4, 4, 1, bias=False),
+            nn.ConvTranspose2d( ngf, nc, kernel_size=4, stride=4, padding=0, bias=False),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
@@ -113,8 +113,11 @@ dataset = datasets.ImageFolder(root="img", transform=transforms.Compose([transfo
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                          shuffle=True)
 
+print(len(dataloader))
+
 # Decide which device we want to run on
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+print(device)
 
 # Plot some training images
 real_batch = next(iter(dataloader))
@@ -189,8 +192,7 @@ print("Starting Training Loop...")
 for epoch in range(num_epochs):
     # For each batch in the dataloader
     for i, data in enumerate(dataloader, 0):
-        print(i)
-
+        #print("m")
         ############################
         # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
         ###########################
@@ -198,6 +200,7 @@ for epoch in range(num_epochs):
         netD.zero_grad()
         # Format batch
         real_cpu = data[0].to(device)
+        #print(real_cpu.shape)
         b_size = real_cpu.size(0)
         label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
         # Forward pass real batch through D
@@ -214,10 +217,13 @@ for epoch in range(num_epochs):
         # Generate batch of latent vectors
         noise = torch.randn(b_size, nz, 1, 1, device=device)
         # Generate fake image batch with G
+        #print(noise.shape)
         fake = netG(noise)
+        #print(fake.shape)
         label.fill_(fake_label)
         #print(fake.size())
         # Classify all fake batch with D
+        #print(fake.detach().shape)
         output = netD(fake.detach()).view(-1)
         # Calculate D's loss on the all-fake batch
         errD_fake = criterion(output, label)
@@ -276,6 +282,13 @@ plt.axis("off")
 for i in img_list:
     print(np.transpose(i,(1,2,0)).shape)
 ims = [[plt.imshow(np.transpose(i,(1,2,0)), animated=True)] for i in img_list]
+for i in range(len(ims)):
+    print(img_list[1].shape)
+    plt.imsave("{}.png".format(i), img_list[i], cmap='gray')
+    file = open("{}.npy".format(i), 'wb')
+    np.save(file, img_list[i])
+    file.close()
+
 ani = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=1000, blit=True)
 
 HTML(ani.to_jshtml())
