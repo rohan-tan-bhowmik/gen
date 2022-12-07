@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 def weights_init(w):
     """
     Initializes the weights of the layer, w.

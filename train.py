@@ -6,10 +6,125 @@ import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import torchvision.transforms as transforms
+import torchvision.datasets as dset
 import random
 
-from utils import get_celeba
-from dcgan import weights_init, Generator, Discriminator
+# Directory containing the data.
+root = 'img/'
+
+def get_dataloader(params):
+    """
+    Loads the dataset and applies proproccesing steps to it.
+    Returns a PyTorch DataLoader.
+
+    """
+    # Data proprecessing.
+    transform = transforms.Compose([
+        transforms.Resize(params['imsize']),
+        transforms.CenterCrop(params['imsize']),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5),
+            (0.5, 0.5, 0.5))])
+
+    # Create the dataset.
+    dataset = dset.ImageFolder(root=root, transform=transform)
+
+    # Create the dataloader.
+    dataloader = torch.utils.data.DataLoader(dataset,
+        batch_size=params['bsize'],
+        shuffle=True)
+
+    return dataloader
+
+
+def weights_init(w):
+    """
+    Initializes the weights of the layer, w.
+    """
+    classname = w.__class__.__name__
+    if classname.find('conv') != -1:
+        nn.init.normal_(w.weight.data, 0.0, 0.02)
+    elif classname.find('bn') != -1:
+        nn.init.normal_(w.weight.data, 1.0, 0.02)
+        nn.init.constant_(w.bias.data, 0)
+
+# Define the Generator Network
+class Generator(nn.Module):
+    def __init__(self, params):
+        super().__init__()
+
+        # Input is the latent vector Z.
+        self.tconv1 = nn.ConvTranspose2d(params['nz'], params['ngf']*8,
+            kernel_size=4, stride=1, padding=0, bias=False)
+        self.bn1 = nn.BatchNorm2d(params['ngf']*8)
+
+        # Input Dimension: (ngf*8) x 4 x 4
+        self.tconv2 = nn.ConvTranspose2d(params['ngf']*8, params['ngf']*4,
+            4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(params['ngf']*4)
+
+        # Input Dimension: (ngf*4) x 8 x 8
+        self.tconv3 = nn.ConvTranspose2d(params['ngf']*4, params['ngf']*2,
+            4, 2, 1, bias=False)
+        self.bn3 = nn.BatchNorm2d(params['ngf']*2)
+
+        # Input Dimension: (ngf*2) x 16 x 16
+        self.tconv4 = nn.ConvTranspose2d(params['ngf']*2, params['ngf'],
+            4, 2, 1, bias=False)
+        self.bn4 = nn.BatchNorm2d(params['ngf'])
+
+        # Input Dimension: (ngf) * 32 * 32
+        self.tconv5 = nn.ConvTranspose2d(params['ngf'], params['nc'],
+            4, 2, 1, bias=False)
+        #Output Dimension: (nc) x 64 x 64
+
+    def forward(self, x):
+        x = F.relu(self.bn1(self.tconv1(x)))
+        x = F.relu(self.bn2(self.tconv2(x)))
+        x = F.relu(self.bn3(self.tconv3(x)))
+        x = F.relu(self.bn4(self.tconv4(x)))
+
+        x = F.tanh(self.tconv5(x))
+
+        return x
+
+# Define the Discriminator Network
+class Discriminator(nn.Module):
+    def __init__(self, params):
+        super().__init__()
+
+        # Input Dimension: (nc) x 64 x 64
+        self.conv1 = nn.Conv2d(params['nc'], params['ndf'],
+            4, 2, 1, bias=False)
+
+        # Input Dimension: (ndf) x 32 x 32
+        self.conv2 = nn.Conv2d(params['ndf'], params['ndf']*2,
+            4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(params['ndf']*2)
+
+        # Input Dimension: (ndf*2) x 16 x 16
+        self.conv3 = nn.Conv2d(params['ndf']*2, params['ndf']*4,
+            4, 2, 1, bias=False)
+        self.bn3 = nn.BatchNorm2d(params['ndf']*4)
+
+        # Input Dimension: (ndf*4) x 8 x 8
+        self.conv4 = nn.Conv2d(params['ndf']*4, params['ndf']*8,
+            4, 2, 1, bias=False)
+        self.bn4 = nn.BatchNorm2d(params['ndf']*8)
+
+        # Input Dimension: (ndf*8) x 4 x 4
+        self.conv5 = nn.Conv2d(params['ndf']*8, 1, 4, 1, 0, bias=False)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.conv1(x), 0.2, True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2, True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2, True)
+        x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2, True)
+
+        x = F.sigmoid(self.conv5(x))
+
+        return x
 
 # Set random seed for reproducibility.
 seed = 369
@@ -20,7 +135,7 @@ print("Random Seed: ", seed)
 # Parameters to define the model.
 params = {
     "bsize" : 128,# Batch size during training.
-    'imsize' : 64,# Spatial size of training images. All images will be resized to this size during preprocessing.
+    'imsize' : 512,# Spatial size of training images. All images will be resized to this size during preprocessing.
     'nc' : 3,# Number of channles in the training images. For coloured images this is 3.
     'nz' : 100,# Size of the Z latent vector (the input to the generator).
     'ngf' : 64,# Size of feature maps in the generator. The depth will be multiples of this.
@@ -35,7 +150,7 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 # Get the data.
-dataloader = get_celeba(params)
+dataloader = get_dataloader(params)
 
 # Plot the training images.
 sample_batch = next(iter(dataloader))
