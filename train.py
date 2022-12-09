@@ -80,10 +80,15 @@ class Generator(nn.Module):
         #Output Dimension: (nc) x 64 x 64
 
     def forward(self, x):
+        #print(x.shape, " v")
         x = F.relu(self.bn1(self.tconv1(x)))
+        #print(x.shape, " w")
         x = F.relu(self.bn2(self.tconv2(x)))
+        #print(x.shape, " x")
         x = F.relu(self.bn3(self.tconv3(x)))
+        #print(x.shape, " y")
         x = F.relu(self.bn4(self.tconv4(x)))
+        #print(x.shape, " z")
 
         x = F.tanh(self.tconv5(x))
 
@@ -117,10 +122,15 @@ class Discriminator(nn.Module):
         self.conv5 = nn.Conv2d(params['ndf']*8, 1, 4, 1, 0, bias=False)
 
     def forward(self, x):
+        #print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
+        #print(x.shape, " b")
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2, True)
+        #print(x.shape, " c")
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2, True)
+        #print(x.shape, " d")
         x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2, True)
+        #print(x.shape, " e")
 
         x = F.sigmoid(self.conv5(x))
 
@@ -135,13 +145,13 @@ print("Random Seed: ", seed)
 # Parameters to define the model.
 params = {
     "bsize" : 128,# Batch size during training.
-    'imsize' : 512,# Spatial size of training images. All images will be resized to this size during preprocessing.
+    'imsize' : 64,# Spatial size of training images. All images will be resized to this size during preprocessing.
     'nc' : 3,# Number of channles in the training images. For coloured images this is 3.
     'nz' : 100,# Size of the Z latent vector (the input to the generator).
     'ngf' : 64,# Size of feature maps in the generator. The depth will be multiples of this.
     'ndf' : 64, # Size of features maps in the discriminator. The depth will be multiples of this.
-    'nepochs' : 10,# Number of training epochs.
-    'lr' : 0.0002,# Learning rate for optimizers
+    'nepochs' : 25,# Number of training epochs.
+    'lr' : 0.00002,# Learning rate for optimizers
     'beta1' : 0.5,# Beta1 hyperparam for Adam optimizer
     'save_epoch' : 2}# Save step.
 
@@ -214,8 +224,11 @@ for epoch in range(params['nepochs']):
         netD.zero_grad()
         # Create labels for the real data. (label=1)
         label = torch.full((b_size, ), real_label, device=device)
+        #print(real_data.shape)
         output = netD(real_data).view(-1)
-        errD_real = criterion(output, label)
+        #print(output.shape)
+        #print(label.shape)
+        errD_real = criterion(output, label.float())
         # Calculate gradients for backpropagation.
         errD_real.backward()
         D_x = output.mean().item()
@@ -225,7 +238,7 @@ for epoch in range(params['nepochs']):
         # Generate fake data (images).
         fake_data = netG(noise)
         # Create labels for fake data. (label=0)
-        label.fill_(fake_label  )
+        label.fill_(fake_label)
         # Calculate the output of the discriminator of the fake data.
         # As no gradients w.r.t. the generator parameters are to be
         # calculated, detach() is used. Hence, only gradients w.r.t. the
@@ -233,7 +246,8 @@ for epoch in range(params['nepochs']):
         # This is done because the loss functions for the discriminator
         # and the generator are slightly different.
         output = netD(fake_data.detach()).view(-1)
-        errD_fake = criterion(output, label)
+
+        errD_fake = criterion(output, label.float())
         # Calculate gradients for backpropagation.
         errD_fake.backward()
         D_G_z1 = output.mean().item()
@@ -251,7 +265,7 @@ for epoch in range(params['nepochs']):
         # No detach() is used here as we want to calculate the gradients w.r.t.
         # the generator this time.
         output = netD(fake_data).view(-1)
-        errG = criterion(output, label)
+        errG = criterion(output, label.float())
         # Gradients for backpropagation are calculated.
         # Gradients w.r.t. both the generator and the discriminator
         # parameters are calculated, however, the generator's optimizer
@@ -264,7 +278,7 @@ for epoch in range(params['nepochs']):
         optimizerG.step()
 
         # Check progress of training.
-        if i%50 == 0:
+        if i % 50 == 0:
             print(torch.cuda.is_available())
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, params['nepochs'], i, len(dataloader),
@@ -290,7 +304,7 @@ for epoch in range(params['nepochs']):
             'optimizerG' : optimizerG.state_dict(),
             'optimizerD' : optimizerD.state_dict(),
             'params' : params
-            }, 'model/model_epoch_{}.pth'.format(epoch))
+            }, 'model_{}.pth'.format(epoch))
 
 # Save the final trained model.
 torch.save({
@@ -299,7 +313,7 @@ torch.save({
             'optimizerG' : optimizerG.state_dict(),
             'optimizerD' : optimizerD.state_dict(),
             'params' : params
-            }, 'model/model_final.pth')
+            }, 'model.pth') #'model/model_final.pth')
 
 # Plot the training losses.
 plt.figure(figsize=(10,5))
