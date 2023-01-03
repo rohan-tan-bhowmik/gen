@@ -15,10 +15,11 @@ for i in range(len(files)):
    os.mkdir("img\\{}".format(i))
 '''
 for i in range(len(files)):
-   os.mkdir("img\\{}".format(i))
+   pass
+   #os.mkdir("img\\{}".format(i))
 
 num = 0
-for dir in files:
+for dir in [files[0]]:
    print(dir.split("\\")[-1])
 
    y, sr = librosa.core.load(dir)

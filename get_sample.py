@@ -6,17 +6,19 @@ import cv2
 import numpy as np
 
 amplify = 2
-audio = plt.imread("img/19/1536.png")
-audio = np.maximum(audio - np.percentile(audio, 15), 0)
-audio -= np.min(audio)
-audio /= np.max(audio)
-plt.imshow(audio)
-plt.show()
-S = amplify * np.asarray(audio[:, :, 0])#, dtype=np.float64)
-sr = 22050
+for i in range(16):
+    print(i)
+    audio = plt.imread("sample_{}.png".format(i))
+    #audio = np.maximum(audio - np.percentile(audio, 15), 0)
+    #audio -= np.min(audio)
+    #audio /= np.max(audio)
+    #plt.imshow(audio)
+    #plt.show()
+    S = amplify * np.asarray(audio[:, :, 0])#, dtype=np.float64)
+    sr = 22050
 
-M = librosa.feature.inverse.mel_to_stft(S[:,:1600])
-print("oibe")
-y = librosa.griffinlim(M)
-print("twj9")
-soundfile.write('sample.wav', y, sr)
+    M = librosa.feature.inverse.mel_to_stft(S[:,:1600])
+    print("oibe")
+    y = librosa.griffinlim(M)
+    print("twj9")
+    soundfile.write('sample_{}.wav'.format(i), y, sr)

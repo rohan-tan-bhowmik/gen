@@ -10,6 +10,19 @@ import torchvision.transforms as transforms
 import torchvision.datasets as dset
 import random
 
+# Parameters to define the model.
+params = {
+    "bsize" : 128,# Batch size during training.
+    'imsize' : 512,# Spatial size of training images. All images will be resized to this size during preprocessing.
+    'nc' : 1,# Number of channles in the training images. For coloured images this is 3.
+    'nz' : 100,# Size of the Z latent vector (the input to the generator).
+    'ngf' : 64,# Size of feature maps in the generator. The depth will be multiples of this.
+    'ndf' : 64, # Size of features maps in the discriminator. The depth will be multiples of this.
+    'nepochs' : 200,# Number of training epochs.
+    'lr' : 0.00025,# Learning rate for optimizers
+    'beta1' : 0.5,# Beta1 hyperparam for Adam optimizer
+    'save_epoch' : 10}# Save step.
+
 # Directory containing the data.
 root = 'img/'
 
@@ -25,7 +38,8 @@ def get_dataloader(params):
         transforms.CenterCrop(params['imsize']),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5),
-            (0.5, 0.5, 0.5))])
+            (0.5, 0.5, 0.5)),
+        transforms.Grayscale()])
 
     # Create the dataset.
     dataset = dset.ImageFolder(root=root, transform=transform)
@@ -55,28 +69,33 @@ class Generator(nn.Module):
         super().__init__()
 
         # Input is the latent vector Z.
-        self.tconv1 = nn.ConvTranspose2d(params['nz'], params['ngf']*8,
-            kernel_size=4, stride=1, padding=0, bias=False)
-        self.bn1 = nn.BatchNorm2d(params['ngf']*8)
+        self.tconv1 = nn.ConvTranspose2d(params['nz'], params['ngf']*16,
+            kernel_size=4, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(params['ngf']*16)
 
         # Input Dimension: (ngf*8) x 4 x 4
-        self.tconv2 = nn.ConvTranspose2d(params['ngf']*8, params['ngf']*4,
-            4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(params['ngf']*4)
+        self.tconv2 = nn.ConvTranspose2d(params['ngf']*16, params['ngf']*8,
+            8, 4, 2, bias=False)
+        self.bn2 = nn.BatchNorm2d(params['ngf']*8)
 
         # Input Dimension: (ngf*4) x 8 x 8
-        self.tconv3 = nn.ConvTranspose2d(params['ngf']*4, params['ngf']*2,
+        self.tconv3 = nn.ConvTranspose2d(params['ngf']*8, params['ngf']*4,
             4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(params['ngf']*2)
+        self.bn3 = nn.BatchNorm2d(params['ngf']*4)
 
         # Input Dimension: (ngf*2) x 16 x 16
-        self.tconv4 = nn.ConvTranspose2d(params['ngf']*2, params['ngf'],
+        self.tconv4 = nn.ConvTranspose2d(params['ngf']*4, params['ngf']*2,
+            8, 4, 2, bias=False)
+        self.bn4 = nn.BatchNorm2d(params['ngf']*2)
+
+        # Input Dimension: (ngf*2) x 16 x 16
+        self.tconv5 = nn.ConvTranspose2d(params['ngf']*2, params['ngf'],
             4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(params['ngf'])
+        self.bn5 = nn.BatchNorm2d(params['ngf'])
 
         # Input Dimension: (ngf) * 32 * 32
-        self.tconv5 = nn.ConvTranspose2d(params['ngf'], params['nc'],
-            4, 2, 1, bias=False)
+        self.tconv6 = nn.ConvTranspose2d(params['ngf'], params['nc'],
+            8, 4, 2, bias=False)
         #Output Dimension: (nc) x 64 x 64
 
     def forward(self, x):
@@ -89,8 +108,9 @@ class Generator(nn.Module):
         #print(x.shape, " y")
         x = F.relu(self.bn4(self.tconv4(x)))
         #print(x.shape, " z")
+        x = F.relu(self.bn5(self.tconv5(x)))
 
-        x = F.tanh(self.tconv5(x))
+        x = F.tanh(self.tconv6(x))
 
         return x
 
@@ -101,7 +121,7 @@ class Discriminator(nn.Module):
 
         # Input Dimension: (nc) x 64 x 64
         self.conv1 = nn.Conv2d(params['nc'], params['ndf'],
-            4, 2, 1, bias=False)
+            8, 4, 2, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
         self.conv2 = nn.Conv2d(params['ndf'], params['ndf']*2,
@@ -110,16 +130,23 @@ class Discriminator(nn.Module):
 
         # Input Dimension: (ndf*2) x 16 x 16
         self.conv3 = nn.Conv2d(params['ndf']*2, params['ndf']*4,
-            4, 2, 1, bias=False)
+            8, 4, 2, bias=False)
         self.bn3 = nn.BatchNorm2d(params['ndf']*4)
 
         # Input Dimension: (ndf*4) x 8 x 8
         self.conv4 = nn.Conv2d(params['ndf']*4, params['ndf']*8,
             4, 2, 1, bias=False)
         self.bn4 = nn.BatchNorm2d(params['ndf']*8)
+        
+        # Input Dimension: (ndf*4) x 8 x 8
+        self.conv5 = nn.Conv2d(params['ndf']*8, params['ndf']*16,
+            8, 4, 2, bias=False)
+        self.bn5 = nn.BatchNorm2d(params['ndf']*16)
 
         # Input Dimension: (ndf*8) x 4 x 4
-        self.conv5 = nn.Conv2d(params['ndf']*8, 1, 4, 1, 0, bias=False)
+        self.conv6 = nn.Conv2d(params['ndf']*16, 1, 4, 2, 1, bias=False)
+
+        self.flatten = nn.Flatten()
 
     def forward(self, x):
         #print(x.shape, " a")
@@ -131,8 +158,11 @@ class Discriminator(nn.Module):
         #print(x.shape, " d")
         x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2, True)
         #print(x.shape, " e")
+        x = F.leaky_relu(self.bn5(self.conv5(x)), 0.2, True)
+        #print(x.shape, " f")
 
-        x = F.sigmoid(self.conv5(x))
+        x = F.sigmoid(self.conv6(x))
+        #print(x.shape, " g")
 
         return x
 
@@ -141,19 +171,6 @@ seed = 369
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
-
-# Parameters to define the model.
-params = {
-    "bsize" : 128,# Batch size during training.
-    'imsize' : 64,# Spatial size of training images. All images will be resized to this size during preprocessing.
-    'nc' : 3,# Number of channles in the training images. For coloured images this is 3.
-    'nz' : 100,# Size of the Z latent vector (the input to the generator).
-    'ngf' : 64,# Size of feature maps in the generator. The depth will be multiples of this.
-    'ndf' : 64, # Size of features maps in the discriminator. The depth will be multiples of this.
-    'nepochs' : 25,# Number of training epochs.
-    'lr' : 0.00002,# Learning rate for optimizers
-    'beta1' : 0.5,# Beta1 hyperparam for Adam optimizer
-    'save_epoch' : 2}# Save step.
 
 # Use GPU is available else use CPU.
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
@@ -278,7 +295,7 @@ for epoch in range(params['nepochs']):
         optimizerG.step()
 
         # Check progress of training.
-        if i % 50 == 0:
+        if i % 10 == 0:
             print(torch.cuda.is_available())
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, params['nepochs'], i, len(dataloader),
