@@ -1,4 +1,5 @@
 import torch
+import torch.utils.data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -146,8 +147,6 @@ class Discriminator(nn.Module):
         # Input Dimension: (ndf*8) x 4 x 4
         self.conv6 = nn.Conv2d(params['ndf']*16, 1, 4, 2, 1, bias=False)
 
-        self.flatten = nn.Flatten()
-
     def forward(self, x):
         #print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
@@ -184,8 +183,7 @@ sample_batch = next(iter(dataloader))
 plt.figure(figsize=(8, 8))
 plt.axis("off")
 plt.title("Training Images")
-plt.imshow(np.transpose(vutils.make_grid(
-    sample_batch[0].to(device)[ : 64], padding=2, normalize=True).cpu(), (1, 2, 0)))
+plt.imshow(np.transpose(vutils.make_grid(sample_batch[0].to(device)[ : 64], padding=2, normalize=True).cpu(), (1, 2, 0)))
 
 plt.show()
 
