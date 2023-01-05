@@ -1,6 +1,11 @@
 import torch
+import torch.utils.data
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.transforms as transforms
+import torchvision.datasets as dset
+import torchvision.utils as vutils
+import random
 
 # Parameters to define the model.
 params = {
@@ -15,7 +20,44 @@ params = {
     'beta1' : 0.5,# Beta1 hyperparam for Adam optimizer
     'save_epoch' : 10}# Save step.
 
-# Define the Generator Network
+root = 'img/'
+
+def get_dataloader(params):
+    """
+    Loads the dataset and applies proproccesing steps to it.
+    Returns a PyTorch DataLoader.
+
+    """
+    # Data proprecessing.
+    transform = transforms.Compose([
+        transforms.Resize(params['imsize']),
+        transforms.CenterCrop(params['imsize']),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5),
+            (0.5, 0.5, 0.5)),
+        transforms.Grayscale()])
+
+    # Create the dataset.
+    dataset = dset.ImageFolder(root=root, transform=transform)
+
+    # Create the dataloader.
+    dataloader = torch.utils.data.DataLoader(dataset,
+        batch_size=params['bsize'],
+        shuffle=True)
+
+    return dataloader
+
+class Phaseshift(object):
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int, tuple))
+        self.output_size = output_size
+
+    def __call__(self, sample):
+        image, landmarks = sample['image'], sample['landmarks']
+
+        return {'image': image, 'landmarks': landmarks}
+
+# Generator Network
 #try: batchnorm?
 class Generator(nn.Module):
     def __init__(self, params):
@@ -112,3 +154,15 @@ class Discriminator(nn.Module):
         #print(x.shape, " g")
 
         return x
+    
+# Set random seed for reproducibility.
+seed = 369
+random.seed(seed)
+torch.manual_seed(seed)
+print("Random Seed: ", seed)
+
+# Use GPU is available else use CPU.
+device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+print(device, " will be used.\n")
+
+dataloader = get_dataloader(params)
