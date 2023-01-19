@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 from PIL import Image
 
-list = open("img/list.txt", 'w', encoding="utf-8")
+list = open("img/list.txt", 'w', encoding="utf-8" )
 
 files = []
 for ext in ('*.m4a', '*.ogg', '*.mp3'):

@@ -9,11 +9,11 @@ from PIL import Image
 
 files = []
 for ext in ('*.m4a', '*.ogg', '*.mp3'):
-   files.extend(glob.glob(join("kikuwu/*/", ext)))
-'''
+   files.extend(glob.glob(join("classical/", ext)))
+
 for i in range(len(files)):
    os.mkdir("img\\{}".format(i))
-'''
+
 for i in range(len(files)):
    pass
    #os.mkdir("img\\{}".format(i))
@@ -28,15 +28,19 @@ for dir in [files[0]]:
    S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=sr/2)
    plt.title(dir.split("\\")[-1])
    length = 512
-   stride = 128
+   stride = 256
+   j = 0
    for i in range(0, len(S[0]) - length, stride):
       im = Image.fromarray(S[:,i:i+length])
       if im.mode != 'RGB':
          im = im.convert('RGB')
-      im.save("img\\{}\\{}.png".format(num, i))
+      im.save("img\\{}\\{}.png".format(num, j))
       print("{}/{}".format(i, len(S[0])))
       #plt.imshow(S[:,i:i+length])
       #plt.show()
+      j += 1
+      print("PROGRESS: {}/{}".format(i, len(S)))
+
    num += 1  
 
    print("PROGRESS: {}/{}".format(num, len(files)))

@@ -56,7 +56,9 @@ class Phaseshift(object):
         pass
     
     def __call__(self, sample):
+        print(sample)
         image, landmarks = sample['image'], sample['landmarks']
+        print(image.shape)
 
         dimension = 512
         n = random.randint(-dimension,dimension)
@@ -81,27 +83,27 @@ class Generator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        self.tconv1 = nn.ConvTranspose1d(100, 1024*16,
+        self.tconv1 = nn.ConvTranspose1d(100, 1024,
             kernel_size=4, stride=2, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(params['ngf']*16)
 
-        self.tconv2 = nn.ConvTranspose2d(1024*16, 512*64,
+        self.tconv2 = nn.ConvTranspose2d(1024, 512,
             8, 4, 2, bias=False)
         self.bn2 = nn.BatchNorm2d(params['ngf']*8)
 
-        self.tconv3 = nn.ConvTranspose1d(512*64, 256*256,
+        self.tconv3 = nn.ConvTranspose1d(512, 256,
             4, 2, 1, bias=False)
         self.bn3 = nn.BatchNorm2d(params['ngf']*4)
 
-        self.tconv4 = nn.ConvTranspose1d(256*256, 128*1024,
+        self.tconv4 = nn.ConvTranspose1d(256, 128,
             8, 4, 2, bias=False)
         self.bn4 = nn.BatchNorm2d(params['ngf']*2)
 
-        self.tconv5 = nn.ConvTranspose1d(128*1024, 64*4096,
+        self.tconv5 = nn.ConvTranspose1d(128, 64,
             4, 2, 1, bias=False)
         self.bn5 = nn.BatchNorm2d(params['ngf'])
 
-        self.tconv6 = nn.ConvTranspose1d(64*4096, params['nc'],
+        self.tconv6 = nn.ConvTranspose1d(64, params['nc'],
             8, 4, 2, bias=False)
         
         #self.tconv7 = nn.ConvTranspose2d(64*4096, params['nc'],

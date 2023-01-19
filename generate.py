@@ -117,7 +117,7 @@ class Discriminator(nn.Module):
 #parser.add_argument('-num_output', default=64, help='Number of generated outputs')
 #args = parser.parse_args()
 
-load_path = "model.pth"
+load_path = "model_180.pth"
 num_output = 16
 
 # Load the checkpoint file.
