@@ -34,15 +34,14 @@ def get_dataloader(params):
     transform = transforms.Compose([
         transforms.Resize(params['imsize']),
         transforms.CenterCrop(params['imsize']),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5),
-            (0.5, 0.5, 0.5)),
         transforms.Grayscale(),
         Phaseshift(),
+        transforms.ToTensor(),
         Flatten()])
 
     # Create the dataset.
     dataset = dset.ImageFolder(root=root, transform=transform)
+    print(dataset)
 
     # Create the dataloader.
     dataloader = torch.utils.data.DataLoader(dataset,
@@ -55,25 +54,21 @@ class Phaseshift(object):
     def __init__(self):
         pass
     
-    def __call__(self, sample):
-        image, landmarks = sample['image'], sample['landmarks']
-
+    def __call__(self, image):
         dimension = 512
         n = random.randint(-dimension,dimension)
         image = np.concatenate((image, image, image), axis=0)[dimension+n:2*dimension+n]
 
-        return {'image': image, 'landmarks': landmarks}
+        return image#{'image': image, 'landmarks': landmarks}
     
 class Flatten(object):
     def __init__(self):
         pass
     
-    def __call__(self, sample):
-        image, landmarks = sample['image'], sample['landmarks']
+    def __call__(self, image):
+        image = image.view(1, -1)
 
-        image = image.view(-1,)
-
-        return {'image': image, 'landmarks': landmarks}
+        return image#{'image': image, 'landmarks': landmarks}
 
 # Generator Network
 #try: batchnorm?
@@ -81,44 +76,36 @@ class Generator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        self.tconv1 = nn.ConvTranspose1d(100, 1024*16,
+        self.tconv1 = nn.ConvTranspose1d(100, 1024,
             kernel_size=4, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(params['ngf']*16)
 
-        self.tconv2 = nn.ConvTranspose2d(1024*16, 512*64,
+        self.tconv2 = nn.ConvTranspose1d(1024, 512,
             8, 4, 2, bias=False)
-        self.bn2 = nn.BatchNorm2d(params['ngf']*8)
 
-        self.tconv3 = nn.ConvTranspose1d(512*64, 256*256,
+        self.tconv3 = nn.ConvTranspose1d(512, 256,
             4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(params['ngf']*4)
 
-        self.tconv4 = nn.ConvTranspose1d(256*256, 128*1024,
+        self.tconv4 = nn.ConvTranspose1d(256, 128,
             8, 4, 2, bias=False)
-        self.bn4 = nn.BatchNorm2d(params['ngf']*2)
 
-        self.tconv5 = nn.ConvTranspose1d(128*1024, 64*4096,
+        self.tconv5 = nn.ConvTranspose1d(128, 64,
             4, 2, 1, bias=False)
-        self.bn5 = nn.BatchNorm2d(params['ngf'])
 
-        self.tconv6 = nn.ConvTranspose1d(64*4096, params['nc'],
+        self.tconv6 = nn.ConvTranspose1d(64, 1,
             8, 4, 2, bias=False)
-        
-        #self.tconv7 = nn.ConvTranspose2d(64*4096, params['nc'],
-        #    8, 4, 2, bias=False)
 
     def forward(self, x):
-        #print(x.shape, " v")
-        x = F.relu(self.bn1(self.tconv1(x)))
-        #print(x.shape, " w")
-        x = F.relu(self.bn2(self.tconv2(x)))
-        #print(x.shape, " x")
-        x = F.relu(self.bn3(self.tconv3(x)))
-        #print(x.shape, " y")
-        x = F.relu(self.bn4(self.tconv4(x)))
-        #print(x.shape, " z")
-        x = F.relu(self.bn5(self.tconv5(x)))
-
+        print(x.shape, " v")
+        x = F.relu(self.tconv1(x))
+        print(x.shape, " w")
+        x = F.relu(self.tconv2(x))
+        print(x.shape, " x")
+        x = F.relu(self.tconv3(x))
+        print(x.shape, " y")
+        x = F.relu(self.tconv4(x))
+        print(x.shape, " z")
+        x = F.relu(self.tconv5(x))
+        print()
         x = F.tanh(self.tconv6(x))
 
         return x
@@ -129,47 +116,43 @@ class Discriminator(nn.Module):
         super().__init__()
 
         # Input Dimension: (nc) x 64 x 64
-        self.conv1 = nn.Conv2d(params['nc'], params['ndf'],
-            8, 4, 2, bias=False)
+        self.conv1 = nn.Conv1d(1, 6,
+            16, 8, 4, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv2d(params['ndf'], params['ndf']*2,
-            4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(params['ndf']*2)
-
+        self.conv2 = nn.Conv1d(6, 12,
+            16, 8, 4, bias=False)
+        
         # Input Dimension: (ndf*2) x 16 x 16
-        self.conv3 = nn.Conv2d(params['ndf']*2, params['ndf']*4,
-            8, 4, 2, bias=False)
-        self.bn3 = nn.BatchNorm2d(params['ndf']*4)
+        self.conv3 = nn.Conv1d(12, 25,
+            16, 8, 4, bias=False)
 
         # Input Dimension: (ndf*4) x 8 x 8
-        self.conv4 = nn.Conv2d(params['ndf']*4, params['ndf']*8,
-            4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(params['ndf']*8)
+        self.conv4 = nn.Conv1d(25, 51,
+            16, 8, 4, bias=False)
         
         # Input Dimension: (ndf*4) x 8 x 8
-        self.conv5 = nn.Conv2d(params['ndf']*8, params['ndf']*16,
-            8, 4, 2, bias=False)
-        self.bn5 = nn.BatchNorm2d(params['ndf']*16)
+        self.conv5 = nn.Conv1d(51, 102,
+            16, 8, 4, bias=False)
 
         # Input Dimension: (ndf*8) x 4 x 4
-        self.conv6 = nn.Conv2d(params['ndf']*16, 1, 4, 2, 1, bias=False)
+        self.conv6 = nn.Conv1d(102, 1, 16, 8, 4, bias=False)
 
     def forward(self, x):
-        #print(x.shape, " a")
+        print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
-        #print(x.shape, " b")
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2, True)
-        #print(x.shape, " c")
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2, True)
-        #print(x.shape, " d")
-        x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2, True)
-        #print(x.shape, " e")
-        x = F.leaky_relu(self.bn5(self.conv5(x)), 0.2, True)
-        #print(x.shape, " f")
+        print(x.shape, " b")
+        x = F.leaky_relu(self.conv2(x), 0.2, True)
+        print(x.shape, " c")
+        x = F.leaky_relu(self.conv3(x), 0.2, True)
+        print(x.shape, " d")
+        x = F.leaky_relu(self.conv4(x), 0.2, True)
+        print(x.shape, " e")
+        x = F.leaky_relu(self.conv5(x), 0.2, True)
+        print(x.shape, " f")
 
         x = F.sigmoid(self.conv6(x))
-        #print(x.shape, " g")
+        print(x.shape, " g")
 
         return x
     
@@ -239,6 +222,7 @@ print("Starting Training Loop...")
 print("-"*25)
 
 for epoch in range(params['nepochs']):
+    print(dataloader.dataset)
     for i, data in enumerate(dataloader, 0):
         # Transfer data tensor to GPU/CPU (device)
         real_data = data[0].to(device)
