@@ -148,20 +148,20 @@ class Discriminator(nn.Module):
         self.conv6 = nn.Conv2d(params['ndf']*16, 1, 4, 2, 1, bias=False)
 
     def forward(self, x):
-        #print(x.shape, " a")
+        print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
-        #print(x.shape, " b")
+        print(x.shape, " b")
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2, True)
-        #print(x.shape, " c")
+        print(x.shape, " c")
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2, True)
-        #print(x.shape, " d")
+        print(x.shape, " d")
         x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2, True)
-        #print(x.shape, " e")
+        print(x.shape, " e")
         x = F.leaky_relu(self.bn5(self.conv5(x)), 0.2, True)
-        #print(x.shape, " f")
+        print(x.shape, " f")
 
         x = F.sigmoid(self.conv6(x))
-        #print(x.shape, " g")
+        print(x.shape, " g")
 
         return x
 
