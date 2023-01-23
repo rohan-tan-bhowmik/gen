@@ -77,19 +77,19 @@ class Generator(nn.Module):
         super().__init__()
 
         self.tconv1 = nn.ConvTranspose1d(100, 1024,
-            kernel_size=4, stride=2, padding=1, bias=False)
+            kernel_size=8, stride=4, padding=2, bias=False)
 
         self.tconv2 = nn.ConvTranspose1d(1024, 512,
             8, 4, 2, bias=False)
 
         self.tconv3 = nn.ConvTranspose1d(512, 256,
-            4, 2, 1, bias=False)
+            8, 4, 1, bias=False)
 
         self.tconv4 = nn.ConvTranspose1d(256, 128,
             8, 4, 2, bias=False)
 
         self.tconv5 = nn.ConvTranspose1d(128, 64,
-            4, 2, 1, bias=False)
+            8, 4, 1, bias=False)
 
         self.tconv6 = nn.ConvTranspose1d(64, 1,
             8, 4, 2, bias=False)
@@ -116,27 +116,27 @@ class Discriminator(nn.Module):
         super().__init__()
 
         # Input Dimension: (nc) x 64 x 64
-        self.conv1 = nn.Conv1d(1, 6,
+        self.conv1 = nn.Conv1d(1, 64,
             16, 8, 4, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv1d(6, 12,
+        self.conv2 = nn.Conv1d(64, 128,
             16, 8, 4, bias=False)
         
         # Input Dimension: (ndf*2) x 16 x 16
-        self.conv3 = nn.Conv1d(12, 25,
+        self.conv3 = nn.Conv1d(128, 256,
             16, 8, 4, bias=False)
 
         # Input Dimension: (ndf*4) x 8 x 8
-        self.conv4 = nn.Conv1d(25, 51,
+        self.conv4 = nn.Conv1d(256, 512,
             16, 8, 4, bias=False)
         
         # Input Dimension: (ndf*4) x 8 x 8
-        self.conv5 = nn.Conv1d(51, 102,
+        self.conv5 = nn.Conv1d(512, 1024,
             16, 8, 4, bias=False)
 
         # Input Dimension: (ndf*8) x 4 x 4
-        self.conv6 = nn.Conv1d(102, 1, 16, 8, 4, bias=False)
+        self.conv6 = nn.Conv1d(1024, 1, 16, 8, 4, bias=False)
 
     def forward(self, x):
         print(x.shape, " a")
