@@ -77,37 +77,38 @@ class Generator(nn.Module):
         super().__init__()
 
         self.tconv1 = nn.ConvTranspose1d(100, 1024,
-            kernel_size=8, stride=4, padding=2, bias=False)
+            kernel_size=16, stride=8, padding=4, bias=False)
 
         self.tconv2 = nn.ConvTranspose1d(1024, 512,
-            8, 4, 2, bias=False)
+            16, 8, 4, bias=False)
 
         self.tconv3 = nn.ConvTranspose1d(512, 256,
-            8, 4, 1, bias=False)
+            16, 8, 4, bias=False)
 
         self.tconv4 = nn.ConvTranspose1d(256, 128,
-            8, 4, 2, bias=False)
+            16, 8, 4, bias=False)
 
         self.tconv5 = nn.ConvTranspose1d(128, 64,
-            8, 4, 1, bias=False)
+            16, 8, 4, bias=False)
 
         self.tconv6 = nn.ConvTranspose1d(64, 1,
-            8, 4, 2, bias=False)
+            16, 8, 4, bias=False)
 
     def forward(self, x):
-        print(x.shape, " v")
+        debug = 0
+        if debug == 1: print(x.shape, " t")
         x = F.relu(self.tconv1(x))
-        print(x.shape, " w")
+        if debug == 1: print(x.shape, " u")
         x = F.relu(self.tconv2(x))
-        print(x.shape, " x")
+        if debug == 1: print(x.shape, " v")
         x = F.relu(self.tconv3(x))
-        print(x.shape, " y")
+        if debug == 1: print(x.shape, " w")
         x = F.relu(self.tconv4(x))
-        print(x.shape, " z")
+        if debug == 1: print(x.shape, " x")
         x = F.relu(self.tconv5(x))
-        print()
+        if debug == 1: print(x.shape, " y")
         x = F.tanh(self.tconv6(x))
-
+        if debug == 1: print(x.shape, " z")
         return x
 
 # Define the Discriminator Network
@@ -139,20 +140,21 @@ class Discriminator(nn.Module):
         self.conv6 = nn.Conv1d(1024, 1, 16, 8, 4, bias=False)
 
     def forward(self, x):
-        print(x.shape, " a")
+        debug = 0
+        if debug == 1: print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
-        print(x.shape, " b")
+        if debug == 1: print(x.shape, " b")
         x = F.leaky_relu(self.conv2(x), 0.2, True)
-        print(x.shape, " c")
+        if debug == 1: print(x.shape, " c")
         x = F.leaky_relu(self.conv3(x), 0.2, True)
-        print(x.shape, " d")
+        if debug == 1: print(x.shape, " d")
         x = F.leaky_relu(self.conv4(x), 0.2, True)
-        print(x.shape, " e")
+        if debug == 1: print(x.shape, " e")
         x = F.leaky_relu(self.conv5(x), 0.2, True)
-        print(x.shape, " f")
+        if debug == 1: print(x.shape, " f")
 
         x = F.sigmoid(self.conv6(x))
-        print(x.shape, " g")
+        if debug == 1: print(x.shape, " g")
 
         return x
     
@@ -199,7 +201,7 @@ print(netD)
 # Binary Cross Entropy loss function.
 criterion = nn.BCELoss()
 
-fixed_noise = torch.randn(64, params['nz'], 1, 1, device=device)
+fixed_noise = torch.randn(64, params['nz'], 1, device=device)
 
 real_label = 1
 fake_label = 0
@@ -243,7 +245,7 @@ for epoch in range(params['nepochs']):
         D_x = output.mean().item()
         
         # Sample random data from a unit normal distribution.
-        noise = torch.randn(b_size, params['nz'], 1, 1, device=device)
+        noise = torch.randn(b_size, params['nz'], 1, device=device)
         # Generate fake data (images).
         fake_data = netG(noise)
         # Create labels for fake data. (label=0)
@@ -287,7 +289,7 @@ for epoch in range(params['nepochs']):
         optimizerG.step()
 
         # Check progress of training.
-        if i % 10 == 0:
+        if i % 1 == 0:
             print(torch.cuda.is_available())
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                   % (epoch, params['nepochs'], i, len(dataloader),
