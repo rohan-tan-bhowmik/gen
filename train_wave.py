@@ -116,11 +116,11 @@ class Discriminator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        self.conv1 = nn.Conv1d(1, 64,
-            1024, 512, 256, bias=False)
+        self.conv1 = nn.Conv1d(1, 1,
+            1024, 64, 484, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv1d(64, 1,
+        self.conv2 = nn.Conv1d(1, 1,
             1024, 512, 256, bias=False)
 
     def forward(self, x):
