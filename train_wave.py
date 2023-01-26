@@ -22,7 +22,7 @@ params = {
     'beta1' : 0.5,# Beta1 hyperparam for Adam optimizer
     'save_epoch' : 10}# Save step.
 
-root = 'img/'
+root = 'kikuwu_img'
 
 def get_dataloader(params):
     """
@@ -116,45 +116,22 @@ class Discriminator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        # Input Dimension: (nc) x 64 x 64
         self.conv1 = nn.Conv1d(1, 64,
-            16, 8, 4, bias=False)
+            1024, 512, 256, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv1d(64, 128,
-            16, 8, 4, bias=False)
-        
-        # Input Dimension: (ndf*2) x 16 x 16
-        self.conv3 = nn.Conv1d(128, 256,
-            16, 8, 4, bias=False)
-
-        # Input Dimension: (ndf*4) x 8 x 8
-        self.conv4 = nn.Conv1d(256, 512,
-            16, 8, 4, bias=False)
-        
-        # Input Dimension: (ndf*4) x 8 x 8
-        self.conv5 = nn.Conv1d(512, 1024,
-            16, 8, 4, bias=False)
-
-        # Input Dimension: (ndf*8) x 4 x 4
-        self.conv6 = nn.Conv1d(1024, 1, 16, 8, 4, bias=False)
+        self.conv2 = nn.Conv1d(64, 1,
+            1024, 512, 256, bias=False)
 
     def forward(self, x):
-        debug = 0
+        debug = 1
         if debug == 1: print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
         if debug == 1: print(x.shape, " b")
         x = F.leaky_relu(self.conv2(x), 0.2, True)
-        if debug == 1: print(x.shape, " c")
-        x = F.leaky_relu(self.conv3(x), 0.2, True)
-        if debug == 1: print(x.shape, " d")
-        x = F.leaky_relu(self.conv4(x), 0.2, True)
-        if debug == 1: print(x.shape, " e")
-        x = F.leaky_relu(self.conv5(x), 0.2, True)
-        if debug == 1: print(x.shape, " f")
 
-        x = F.sigmoid(self.conv6(x))
-        if debug == 1: print(x.shape, " g")
+        x = F.sigmoid(x)
+        if debug == 1: print(x.shape, " c")
 
         return x
     
