@@ -76,38 +76,23 @@ class Generator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        self.tconv1 = nn.ConvTranspose1d(100, 1024,
-            kernel_size=16, stride=8, padding=4, bias=False)
+        self.tconv1 = nn.ConvTranspose1d(100, 1,
+            kernel_size=1024, stride=64, padding=480, bias=False)
 
-        self.tconv2 = nn.ConvTranspose1d(1024, 512,
-            16, 8, 4, bias=False)
+        self.tconv2 = nn.ConvTranspose1d(1, 1,
+            kernel_size=1024, stride=64, padding=480, bias=False)
 
-        self.tconv3 = nn.ConvTranspose1d(512, 256,
-            16, 8, 4, bias=False)
-
-        self.tconv4 = nn.ConvTranspose1d(256, 128,
-            16, 8, 4, bias=False)
-
-        self.tconv5 = nn.ConvTranspose1d(128, 64,
-            16, 8, 4, bias=False)
-
-        self.tconv6 = nn.ConvTranspose1d(64, 1,
-            16, 8, 4, bias=False)
+        self.tconv3 = nn.ConvTranspose1d(1, 1,
+            kernel_size=1024, stride=64, padding=480, bias=False)
 
     def forward(self, x):
-        debug = 0
-        if debug == 1: print(x.shape, " t")
-        x = F.relu(self.tconv1(x))
-        if debug == 1: print(x.shape, " u")
-        x = F.relu(self.tconv2(x))
-        if debug == 1: print(x.shape, " v")
-        x = F.relu(self.tconv3(x))
+        debug = 1
         if debug == 1: print(x.shape, " w")
-        x = F.relu(self.tconv4(x))
+        x = F.relu(self.tconv1(x))
         if debug == 1: print(x.shape, " x")
-        x = F.relu(self.tconv5(x))
+        x = F.relu(self.tconv2(x))
         if debug == 1: print(x.shape, " y")
-        x = F.tanh(self.tconv6(x))
+        x = F.tanh(self.tconv3(x))
         if debug == 1: print(x.shape, " z")
         return x
 
@@ -117,15 +102,15 @@ class Discriminator(nn.Module):
         super().__init__()
 
         self.conv1 = nn.Conv1d(1, 1,
-            1024, 64, 484, bias=False)
+            kernel_size=1024, stride=64, padding=480, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
         self.conv2 = nn.Conv1d(1, 1,
-            1024, 64, 484, bias=False)
+            kernel_size=1024, stride=64, padding=480, bias=False)
         
         # Input Dimension: (ndf) x 32 x 32
         self.conv3 = nn.Conv1d(1, 1,
-            1024, 64, 484, bias=False)
+            kernel_size=1024, stride=64, padding=480, bias=False)
 
     def forward(self, x):
         debug = 1
@@ -137,7 +122,7 @@ class Discriminator(nn.Module):
         x = F.leaky_relu(self.conv3(x), 0.2, True)
 
         x = F.sigmoid(x)
-        if debug == 1: print(x.shape, " c")
+        if debug == 1: print(x.shape, " d")
 
         return x
     
