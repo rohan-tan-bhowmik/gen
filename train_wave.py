@@ -121,7 +121,11 @@ class Discriminator(nn.Module):
 
         # Input Dimension: (ndf) x 32 x 32
         self.conv2 = nn.Conv1d(1, 1,
-            1024, 512, 256, bias=False)
+            1024, 64, 484, bias=False)
+        
+        # Input Dimension: (ndf) x 32 x 32
+        self.conv3 = nn.Conv1d(1, 1,
+            1024, 64, 484, bias=False)
 
     def forward(self, x):
         debug = 1
@@ -129,6 +133,8 @@ class Discriminator(nn.Module):
         x = F.leaky_relu(self.conv1(x), 0.2, True)
         if debug == 1: print(x.shape, " b")
         x = F.leaky_relu(self.conv2(x), 0.2, True)
+        if debug == 1: print(x.shape, " c")
+        x = F.leaky_relu(self.conv3(x), 0.2, True)
 
         x = F.sigmoid(x)
         if debug == 1: print(x.shape, " c")
