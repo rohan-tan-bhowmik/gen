@@ -17,10 +17,10 @@ params = {
     'nz' : 100,# Size of the Z latent vector (the input to the generator).
     'ngf' : 64,# Size of feature maps in the generator. The depth will be multiples of this.
     'ndf' : 64, # Size of features maps in the discriminator. The depth will be multiples of this.
-    'nepochs' : 200,# Number of training epochs.
+    'nepochs' : 5,# Number of training epochs.
     'lr' : 0.00025,# Learning rate for optimizers
     'beta1' : 0.5,# Beta1 hyperparam for Adam optimizer
-    'save_epoch' : 10}# Save step.
+    'save_epoch' : 1}# Save step.
 
 root = 'kikuwu_img'
 
@@ -76,17 +76,17 @@ class Generator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        self.tconv1 = nn.ConvTranspose1d(100, 1,
+        self.tconv1 = nn.ConvTranspose1d(100, 100,
             kernel_size=1024, stride=64, padding=480, bias=False)
 
-        self.tconv2 = nn.ConvTranspose1d(1, 1,
+        self.tconv2 = nn.ConvTranspose1d(100, 10,
             kernel_size=1024, stride=64, padding=480, bias=False)
 
-        self.tconv3 = nn.ConvTranspose1d(1, 1,
+        self.tconv3 = nn.ConvTranspose1d(10, 1,
             kernel_size=1024, stride=64, padding=480, bias=False)
 
     def forward(self, x):
-        debug = 1
+        debug = 0
         if debug == 1: print(x.shape, " w")
         x = F.relu(self.tconv1(x))
         if debug == 1: print(x.shape, " x")
@@ -101,19 +101,19 @@ class Discriminator(nn.Module):
     def __init__(self, params):
         super().__init__()
 
-        self.conv1 = nn.Conv1d(1, 1,
+        self.conv1 = nn.Conv1d(1, 10,
             kernel_size=1024, stride=64, padding=480, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv1d(1, 1,
+        self.conv2 = nn.Conv1d(10, 100,
             kernel_size=1024, stride=64, padding=480, bias=False)
         
         # Input Dimension: (ndf) x 32 x 32
-        self.conv3 = nn.Conv1d(1, 1,
+        self.conv3 = nn.Conv1d(100, 1,
             kernel_size=1024, stride=64, padding=480, bias=False)
 
     def forward(self, x):
-        debug = 1
+        debug = 0
         if debug == 1: print(x.shape, " a")
         x = F.leaky_relu(self.conv1(x), 0.2, True)
         if debug == 1: print(x.shape, " b")
