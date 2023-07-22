@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
-dirs = ["img/0/5407.png"]#["sample_{}.png".format(i) for i in range(16)]
+dirs = ["kikuwu_img/0/3456.png"]#["sample_{}.png".format(i) for i in range(16)]
 
 amplify = 2
 for dir in dirs:

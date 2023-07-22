@@ -257,7 +257,7 @@ with wave.open('sample.wav', 'wb') as sample:
     sample.setnchannels(1)
     sample.setsampwidth(4)
     sample.setframerate(4800)
-    for item in data:
+    for dir in dirs:
         sample.writeframesraw(struct.pack('<l', int(item * INTMAX)))
 
     sample.close()
