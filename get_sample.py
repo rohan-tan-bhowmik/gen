@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
+dirs = ["img/0/5407.png"]#["sample_{}.png".format(i) for i in range(16)]
+
 amplify = 2
-for i in range(16):
-    print(i)
-    audio = plt.imread("sample_{}.png".format(i))
+for dir in dirs:
+    audio = plt.imread(dir)
     #audio = np.maximum(audio - np.percentile(audio, 15), 0)
     #audio -= np.min(audio)
     #audio /= np.max(audio)
@@ -21,4 +22,5 @@ for i in range(16):
     print("oibe")
     y = librosa.griffinlim(M)
     print("twj9")
-    soundfile.write('sample_{}.wav'.format(i), y, sr)
+    print('{}_output.wav'.format(dir.split(".")[0]))
+    soundfile.write('{}_output.wav'.format(dir.split(".")[0].split("/")[-1]), y, sr)
