@@ -1,55 +1,45 @@
-import glob
 import os
-from os.path import join
+import numpy as np
+import scipy
+import matplotlib
+from matplotlib import pyplot as plt
+from numba import jit
 import librosa
-import soundfile
-import matplotlib.pyplot as plt
-from scipy.ndimage.filters import gaussian_filter
-from PIL import Image
+import pandas as pd
+import IPython.display as ipd
+import glob
+from os.path import join
 
+import sys
+sys.path.append('..')
+import libfmp.c2
+
+#%matplotlib inline
 files = []
 for ext in ('*.m4a', '*.ogg', '*.mp3'):
    files.extend(glob.glob(join("kikuwu/*/", ext)))
 
-print(files)
+i = 0
+for file in files:
+    i += 1
+    print("PROGRESS: {0}/{1}: {2}".format(i, len(files), file))
+    # Load wav
+    #fn_wav = "kikuwu/(HD) Red Riding Hood's Wolf PV【KIKUO】- English Subs/(HD) Red Riding Hood's Wolf PV【KIKUO】- English Subs (152kbit_Opus).ogg"
+    Fs = 22050
+    x, Fs = librosa.load(file, sr=Fs)
 
-#for i in range(len(files)):
-#   os.mkdir("img\\{}".format(i))
+    # Compute Magnitude STFT
+    N = 4096
+    H = 1024
+    X, T_coef, F_coef = libfmp.c2.stft_convention_fmp(x, Fs, N, H)
+    Y = np.abs(X)
 
-for i in range(len(files)):
-   pass
-   #os.mkdir("img\\{}".format(i))
+    #eps = np.finfo(float).eps
+    #plt.imshow(10 * np.log10(eps + Y), origin='lower', aspect='auto', cmap='gray_r', extent=[T_coef[0], T_coef[-1], F_coef[0], F_coef[-1]])
 
-num = 0
-for dir in files:
-   print(dir.split("/")[-1])
+    # Plot spectrogram
+    #eps = np.finfo(float).eps
+    #plt.imshow(Y, cmap='gray')#, origin='lower', aspect='auto', cmap='gray_r', extent=[T_coef[0], T_coef[-1], F_coef[0], F_coef[-1]])
 
-   y, sr = librosa.core.load(dir)
-   print(sr)
-   #S = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=4000))
-   S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=512, fmax=sr/2)
-   plt.title(dir.split("/")[-1])
-   length = 1024
-   stride = 512
-   j = 0
-   for i in range(0, len(S[0]) - length, stride):
-      im = Image.fromarray(S[:,i:i+length])
-      if im.mode != 'RGB':
-         im = im.convert('RGB')
-      im.save("kikuwu_img/{}/{}.png".format(num, j))
-      print("{}/{}".format(i, len(S[0])))
-      #plt.imshow(S[:,i:i+length])
-      #plt.show()
-      j += 1
-      print("PROGRESS: {}/{}".format(i, len(S)))
-
-   num += 1  
-
-   print("PROGRESS: {}/{}".format(num, len(files)))
-   '''
-   M = librosa.feature.inverse.mel_to_stft(S[:,:1600])
-   print("oibe")
-   y = librosa.griffinlim(M)
-   print("twj9")
-   soundfile.write('sample.wav', y, sr)
-   '''
+    plt.imsave("kikuwu_specs/{}.png".format(file.split("/")[-1].split(".")[0]), Y, cmap='gray')
+    #plt.show()
