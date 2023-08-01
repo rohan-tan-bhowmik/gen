@@ -153,6 +153,7 @@ class Encoder(nn.Module):
             nn.ReLU(),
             nn.Linear(encode_size, out_size, bias=bias)
         )
+        self.net.to(device)
     
     def forward(self, x):
         return self.net(x)
